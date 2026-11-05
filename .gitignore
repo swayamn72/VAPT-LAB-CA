@@ -1,0 +1,6 @@
+node_modules/
+*.log
+.env
+vapt_lab.db
+.DS_Store
+Thumbs.db

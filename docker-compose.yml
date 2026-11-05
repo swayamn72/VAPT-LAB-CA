@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  vapt-lab:
+    build: .
+    container_name: securebank_vapt_lab
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+    volumes:
+      - ./vapt_lab.db:/app/vapt_lab.db
+    restart: unless-stopped
+    networks:
+      - vapt_isolated_net
+
+networks:
+  vapt_isolated_net:
+    driver: bridge

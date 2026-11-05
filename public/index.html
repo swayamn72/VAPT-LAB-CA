@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureBank Labs // VAPT Assessment & Defense Platform</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="top-nav">
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <h1>SECUREBANK LABS</h1>
+        <div style="font-size: 0.72rem; color: #94a3b8;">Vulnerability Assessment & Penetration Testing Environment</div>
+      </div>
+      <span class="brand-badge">ACADEMIC CA LAB</span>
+    </div>
+
+    <div class="header-controls">
+      <!-- Mode Toggle Switch -->
+      <div class="mode-toggle-pill">
+        <button id="btn-mode-vuln" class="mode-toggle-btn active vuln">⚠️ Vulnerable Mode</button>
+        <button id="btn-mode-secure" class="mode-toggle-btn">🛡️ Secure Mode</button>
+      </div>
+
+      <button id="btn-reset-db" class="btn-secondary">
+        <span>🔄</span> Reset DB
+      </button>
+    </div>
+  </header>
+
+  <!-- Sub-Header Navigation Tabs -->
+  <nav class="tabs-bar">
+    <button class="tab-btn active" data-tab="stations">🎯 Test Stations</button>
+    <button class="tab-btn" data-tab="matrix">📊 Vulnerability Matrix & CVSS</button>
+    <button class="tab-btn" data-tab="diffs">🔍 Vulnerable vs Remediated Diffs</button>
+    <button class="tab-btn" data-tab="report">📑 Full VAPT Report</button>
+    <button class="tab-btn" data-tab="screencast">🎥 Video Screencast Script</button>
+  </nav>
+
+  <!-- Main Workspace -->
+  <main class="main-content">
+
+    <!-- Global State Overview Card -->
+    <div class="overview-card">
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem;">
+          <h2 style="font-size: 1.25rem;">Active Target System: <code>127.0.0.1:3000</code></h2>
+          <span id="current-mode-badge" class="severity-pill sev-critical">VULNERABLE / LAB MODE</span>
+        </div>
+        <p id="current-mode-desc" style="font-size: 0.85rem; color: #9ca3af;">
+          All 5 educational vulnerabilities are currently active and exploitable for assessment.
+        </p>
+      </div>
+      <div class="overview-stats">
+        <div class="stat-box">
+          <div class="stat-number">5</div>
+          <div class="stat-label">Vulnerabilities</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" style="color: #f87171;">9.8</div>
+          <div class="stat-label">Max CVSS Score</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" style="color: #34d399;">100%</div>
+          <div class="stat-label">Remediated In Sec Mode</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 1: Interactive Test Stations -->
+    <section id="panel-stations" class="tab-panel active">
+      <div class="station-grid">
+
+        <!-- Station 1: SQL Injection -->
+        <article class="station-card">
+          <div class="station-header">
+            <div>
+              <div class="station-title">Station 1: SQL Injection (SQLi)</div>
+              <div class="station-meta">
+                <span class="badge badge-cwe">CWE-89</span>
+                <span class="badge badge-owasp">A03:2021 Injection</span>
+                <span class="severity-pill sev-critical">CVSS 9.8</span>
+              </div>
+            </div>
+          </div>
+          <div class="station-body">
+            <p class="station-desc">
+              Customer search query concatenates unsanitized user input into raw SQL, allowing authentication bypass and arbitrary database extraction.
+            </p>
+            <form id="form-sqli" class="test-form">
+              <div class="form-group">
+                <label>Search Username or Email:</label>
+                <input id="input-sqli-query" class="form-input" type="text" placeholder="e.g. alice or ' OR 1=1 --" value="' OR '1'='1">
+                <div class="payload-chips">
+                  <span class="chip" onclick="fillPayload('input-sqli-query', 'alice')">Safe: 'alice'</span>
+                  <span class="chip" onclick="fillPayload('input-sqli-query', '\' OR \'1\'=\'1')">PoC: ' OR '1'='1</span>
+                  <span class="chip" onclick="fillPayload('input-sqli-query', 'admin\' --')">PoC: admin' --</span>
+                  <span class="chip" onclick="fillPayload('input-sqli-query', '\' UNION SELECT 99, sqlite_version(), \'db-ver\', \'leak\', 0 --')">PoC: UNION SELECT</span>
+                </div>
+              </div>
+              <button type="submit" class="btn-trigger">Execute Search Request</button>
+            </form>
+            <div id="result-sqli" style="margin-top: 1rem;"></div>
+          </div>
+        </article>
+
+        <!-- Station 2: IDOR -->
+        <article class="station-card">
+          <div class="station-header">
+            <div>
+              <div class="station-title">Station 2: Broken Object Authorization (IDOR)</div>
+              <div class="station-meta">
+                <span class="badge badge-cwe">CWE-639</span>
+                <span class="badge badge-owasp">A01:2021 Broken Access</span>
+                <span class="severity-pill sev-high">CVSS 8.5</span>
+              </div>
+            </div>
+          </div>
+          <div class="station-body">
+            <p class="station-desc">
+              The financial statement endpoint queries documents solely by <code>:id</code> without confirming if the record belongs to the requester.
+            </p>
+            <form id="form-idor" class="test-form">
+              <div class="form-group">
+                <label>Authenticated As (Simulated Header):</label>
+                <select id="select-idor-user" class="form-select">
+                  <option value="2">Alice (User ID 2, Customer)</option>
+                  <option value="3">Bob (User ID 3, Customer)</option>
+                  <option value="1">Admin (User ID 1, Executive)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Target Statement ID to Access:</label>
+                <input id="input-idor-id" class="form-input" type="number" value="1">
+                <div class="payload-chips">
+                  <span class="chip" onclick="fillPayload('input-idor-id', '1')">ID 1 (Executive Admin TXN $120,000)</span>
+                  <span class="chip" onclick="fillPayload('input-idor-id', '2')">ID 2 (Alice TXN $3,500)</span>
+                  <span class="chip" onclick="fillPayload('input-idor-id', '4')">ID 4 (Bob TXN $1,200)</span>
+                </div>
+              </div>
+              <button type="submit" class="btn-trigger">Fetch Statement Document</button>
+            </form>
+            <div id="result-idor" style="margin-top: 1rem;"></div>
+          </div>
+        </article>
+
+        <!-- Station 3: XSS -->
+        <article class="station-card">
+          <div class="station-header">
+            <div>
+              <div class="station-title">Station 3: Cross-Site Scripting (Stored XSS)</div>
+              <div class="station-meta">
+                <span class="badge badge-cwe">CWE-79</span>
+                <span class="badge badge-owasp">A03:2021 Injection</span>
+                <span class="severity-pill sev-high">CVSS 7.2</span>
+              </div>
+            </div>
+          </div>
+          <div class="station-body">
+            <p class="station-desc">
+              Feedback submissions are stored raw and rendered directly into the DOM, allowing JavaScript injection in victim browsers.
+            </p>
+            <form id="form-xss" class="test-form">
+              <div class="form-group">
+                <label>Author & Category:</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                  <input id="input-xss-author" class="form-input" type="text" value="attacker">
+                  <select id="select-xss-category" class="form-select">
+                    <option value="Security Alert">Security Alert</option>
+                    <option value="Support">Support</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Message Content:</label>
+                <input id="input-xss-msg" class="form-input" type="text" value="<b style='color:#ef4444'>[XSS Verified]</b> Session cookie alert: <img src=x onerror='console.log(document.cookie)'>">
+                <div class="payload-chips">
+                  <span class="chip" onclick="fillPayload('input-xss-msg', '<img src=x onerror=alert(1)>')">&lt;img onerror=alert(1)&gt;</span>
+                  <span class="chip" onclick="fillPayload('input-xss-msg', '<b style=color:red;font-size:16px>HTML Injection Defaced</b>')">HTML Defacement</span>
+                </div>
+              </div>
+              <button type="submit" class="btn-trigger">Submit Ticket Message</button>
+            </form>
+            <div style="margin-top: 1rem;">
+              <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.4rem;">Live Feed Rendering:</div>
+              <div id="feedback-feed" style="max-height: 140px; overflow-y: auto;"></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Station 4: Broken Auth -->
+        <article class="station-card">
+          <div class="station-header">
+            <div>
+              <div class="station-title">Station 4: Broken Auth & PII Data Exposure</div>
+              <div class="station-meta">
+                <span class="badge badge-cwe">CWE-256 / 307</span>
+                <span class="badge badge-owasp">A07:2021 Auth Failures</span>
+                <span class="severity-pill sev-high">CVSS 7.5</span>
+              </div>
+            </div>
+          </div>
+          <div class="station-body">
+            <p class="station-desc">
+              Weak MD5 hashing, missing login rate limits, and full database projection leaking cleartext/MD5 passwords and National ID numbers.
+            </p>
+            <form id="form-auth" class="test-form">
+              <div class="form-group">
+                <label>Credentials:</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                  <input id="input-auth-user" class="form-input" type="text" placeholder="Username" value="alice">
+                  <input id="input-auth-pass" class="form-input" type="text" placeholder="Password" value="AlicePassword123">
+                </div>
+                <div class="payload-chips">
+                  <span class="chip" onclick="fillPayload('input-auth-user', 'alice'); fillPayload('input-auth-pass', 'AlicePassword123');">alice / AlicePassword123</span>
+                  <span class="chip" onclick="fillPayload('input-auth-user', 'bob'); fillPayload('input-auth-pass', 'BobPass!998');">bob / BobPass!998</span>
+                  <span class="chip" onclick="fillPayload('input-auth-user', 'admin'); fillPayload('input-auth-pass', 'WrongPassword1');">Simulate Failed Attempt</span>
+                </div>
+              </div>
+              <button type="submit" class="btn-trigger">Test Login Endpoint</button>
+            </form>
+            <div id="result-auth" style="margin-top: 1rem;"></div>
+          </div>
+        </article>
+
+        <!-- Station 5: Misconfiguration -->
+        <article class="station-card" style="grid-column: 1 / -1;">
+          <div class="station-header">
+            <div>
+              <div class="station-title">Station 5: Security Misconfiguration & Information Disclosure</div>
+              <div class="station-meta">
+                <span class="badge badge-cwe">CWE-200 / CWE-16</span>
+                <span class="badge badge-owasp">A05:2021 Security Misconfig</span>
+                <span class="severity-pill sev-medium">CVSS 6.5</span>
+              </div>
+            </div>
+          </div>
+          <div class="station-body">
+            <p class="station-desc">
+              Exposed internal diagnostic endpoints dumping server environment variables, file paths, and database tokens, alongside unhandled stack trace disclosure.
+            </p>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+              <button id="btn-test-debug" class="btn-trigger" style="background: #334155;">Query /api/system/debug (Diagnostics Dump)</button>
+              <button id="btn-test-crash" class="btn-trigger" style="background: #334155;">Query /api/system/crash-test (Stack Trace Test)</button>
+            </div>
+            <div id="result-system"></div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- PANEL 2: Vulnerability Matrix & CVSS -->
+    <section id="panel-matrix" class="tab-panel">
+      <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">OWASP Top 10 Assessment Matrix & CVSS v3.1 Scoring</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Vulnerability Finding</th>
+            <th>CWE ID</th>
+            <th>OWASP Category</th>
+            <th>CVSS v3.1 Vector</th>
+            <th>Score</th>
+            <th>Severity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>VULN-01</strong></td>
+            <td>SQL Injection in User Search</td>
+            <td>CWE-89</td>
+            <td>A03:2021 - Injection</td>
+            <td><code>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</code></td>
+            <td><strong>9.8</strong></td>
+            <td><span class="severity-pill sev-critical">CRITICAL</span></td>
+          </tr>
+          <tr>
+            <td><strong>VULN-02</strong></td>
+            <td>Insecure Direct Object Reference (IDOR)</td>
+            <td>CWE-639</td>
+            <td>A01:2021 - Broken Access Control</td>
+            <td><code>CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N</code></td>
+            <td><strong>8.5</strong></td>
+            <td><span class="severity-pill sev-high">HIGH</span></td>
+          </tr>
+          <tr>
+            <td><strong>VULN-03</strong></td>
+            <td>Stored Cross-Site Scripting (XSS)</td>
+            <td>CWE-79</td>
+            <td>A03:2021 - Injection</td>
+            <td><code>CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N</code></td>
+            <td><strong>7.2</strong></td>
+            <td><span class="severity-pill sev-high">HIGH</span></td>
+          </tr>
+          <tr>
+            <td><strong>VULN-04</strong></td>
+            <td>Weak Password Hashing & Sensitive Data Leak</td>
+            <td>CWE-256 / 307</td>
+            <td>A07:2021 - Auth Failures</td>
+            <td><code>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:N</code></td>
+            <td><strong>7.5</strong></td>
+            <td><span class="severity-pill sev-high">HIGH</span></td>
+          </tr>
+          <tr>
+            <td><strong>VULN-05</strong></td>
+            <td>Diagnostic Info Disclosure & Stack Trace Leak</td>
+            <td>CWE-200 / 16</td>
+            <td>A05:2021 - Security Misconfiguration</td>
+            <td><code>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N</code></td>
+            <td><strong>6.5</strong></td>
+            <td><span class="severity-pill sev-medium">MEDIUM</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- PANEL 3: Code Diffs -->
+    <section id="panel-diffs" class="tab-panel">
+      <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Source Code Vulnerability & Remediation Analysis</h3>
+
+      <!-- Diff 1 -->
+      <h4 style="color: #60a5fa; margin-bottom: 0.5rem;">Finding 1: SQL Injection (CWE-89)</h4>
+      <div class="diff-container">
+        <div class="diff-box vuln">
+          <div class="diff-header">❌ Vulnerable Implementation (routes/users.js)</div>
+          <div class="diff-body"><pre>
+// Raw string concatenation allows injection
+const rawSql = `SELECT id, username, email, role, balance 
+  FROM users 
+  WHERE username LIKE '%${query}%' OR email = '${query}'`;
+
+const results = db.prepare(rawSql).all();
+          </pre></div>
+        </div>
+        <div class="diff-box secure">
+          <div class="diff-header">✓ Secure Remediation (Parameterized Query)</div>
+          <div class="diff-body"><pre>
+// Parameterized query with bound parameters
+const sql = `SELECT id, username, email, role, balance 
+  FROM users 
+  WHERE username LIKE ? OR email = ?`;
+
+const results = db.prepare(sql).all(`%${query}%`, query);
+          </pre></div>
+        </div>
+      </div>
+
+      <!-- Diff 2 -->
+      <h4 style="color: #60a5fa; margin-bottom: 0.5rem;">Finding 2: Broken Object-Level Authorization (IDOR - CWE-639)</h4>
+      <div class="diff-container">
+        <div class="diff-box vuln">
+          <div class="diff-header">❌ Vulnerable Implementation (routes/statements.js)</div>
+          <div class="diff-body"><pre>
+// Direct fetch solely by URL parameter ID without ownership check
+const statement = db.prepare(`
+  SELECT * FROM statements WHERE id = ?
+`).get(req.params.id);
+          </pre></div>
+        </div>
+        <div class="diff-box secure">
+          <div class="diff-header">✓ Secure Remediation (Enforced Session Ownership)</div>
+          <div class="diff-body"><pre>
+// Enforces user_id ownership binding from validated session
+const statement = currentUser.role === 'admin' 
+  ? db.prepare('SELECT * FROM statements WHERE id = ?').get(statementId)
+  : db.prepare('SELECT * FROM statements WHERE id = ? AND user_id = ?').get(statementId, currentUser.id);
+
+if (!statement) return res.status(403).json({ error: 'Access Denied' });
+          </pre></div>
+        </div>
+      </div>
+
+      <!-- Diff 3 -->
+      <h4 style="color: #60a5fa; margin-bottom: 0.5rem;">Finding 3: Cross-Site Scripting (XSS - CWE-79)</h4>
+      <div class="diff-container">
+        <div class="diff-box vuln">
+          <div class="diff-header">❌ Vulnerable Implementation (routes/feedback.js)</div>
+          <div class="diff-body"><pre>
+// Raw unescaped storage & direct innerHTML rendering
+db.prepare('INSERT INTO feedback (author, message) VALUES (?, ?)').run(author, message);
+// Browser executes: container.innerHTML = feedback.message;
+          </pre></div>
+        </div>
+        <div class="diff-box secure">
+          <div class="diff-header">✓ Secure Remediation (HTML Encoding & CSP)</div>
+          <div class="diff-body"><pre>
+// Neutralize dangerous meta-characters before rendering
+const safeMessage = message
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self';");
+// Browser renders safely via textContent
+          </pre></div>
+        </div>
+      </div>
+
+      <!-- Diff 4 -->
+      <h4 style="color: #60a5fa; margin-bottom: 0.5rem;">Finding 4: Insecure Credential Storage (CWE-256) & Brute Force</h4>
+      <div class="diff-container">
+        <div class="diff-box vuln">
+          <div class="diff-header">❌ Vulnerable Implementation (routes/auth.js)</div>
+          <div class="diff-body"><pre>
+// Weak MD5 verification, no rate-limiting, and leaks full DB row
+const inputMd5 = crypto.createHash('md5').update(password).digest('hex');
+if (user.password_md5 === inputMd5) {
+  return res.json({ user }); // Leaks password hashes and National ID
+}
+          </pre></div>
+        </div>
+        <div class="diff-box secure">
+          <div class="diff-header">✓ Secure Remediation (Bcrypt & Lockout Protection)</div>
+          <div class="diff-body"><pre>
+// Adaptive salted bcrypt hash verification & account lockout
+if (!bcrypt.compareSync(password, user.password_bcrypt)) {
+  attemptsTracker.registerFailure(clientIp);
+  return res.status(401).json({ error: 'Invalid credentials' });
+}
+// Whitelisted safe projection:
+const { id, username, email, role } = user;
+return res.json({ user: { id, username, email, role } });
+          </pre></div>
+        </div>
+      </div>
+
+      <!-- Diff 5 -->
+      <h4 style="color: #60a5fa; margin-bottom: 0.5rem;">Finding 5: Information Disclosure & Debug Misconfiguration (CWE-200)</h4>
+      <div class="diff-container">
+        <div class="diff-box vuln">
+          <div class="diff-header">❌ Vulnerable Implementation (routes/system.js)</div>
+          <div class="diff-body"><pre>
+// Debug endpoint exposes environment and runtime keys
+router.get('/debug', (req, res) => {
+  res.json({ env: process.env, dbKeys: internalConfig });
+});
+          </pre></div>
+        </div>
+        <div class="diff-box secure">
+          <div class="diff-header">✓ Secure Remediation (Disabled In Prod & Generic Errors)</div>
+          <div class="diff-body"><pre>
+// Diagnostic routes disabled; exceptions return opaque incident IDs
+router.get('/debug', (req, res) => res.status(404).json({ error: 'Not Found' }));
+
+// Centralized error handler:
+res.status(500).json({ error: 'Internal Error', incidentId: 'INC-9912' });
+          </pre></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 4: Full Report View -->
+    <section id="panel-report" class="tab-panel">
+      <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem;">
+        <h2 style="color: var(--accent-cyan); margin-bottom: 0.5rem;">VAPT Comprehensive Assessment Report</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Formal academic report documenting the architecture, vulnerability assessments, Proof-of-Concepts, CVSS metrics, remediations, and re-test outcomes.
+        </p>
+
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+          <a href="docs/VAPT_COMPREHENSIVE_LAB_REPORT.md" target="_blank" class="btn-secondary" style="text-decoration: none;">
+            📄 View Full Markdown Report (docs/VAPT_COMPREHENSIVE_LAB_REPORT.md)
+          </a>
+          <a href="docs/LAB_EXECUTION_GUIDE.md" target="_blank" class="btn-secondary" style="text-decoration: none;">
+            🛠️ Kali & Burp Suite Execution Guide
+          </a>
+        </div>
+
+        <div style="background: #090d16; padding: 1.5rem; border-radius: 8px; border: 1px solid #1f293d; font-size: 0.85rem; line-height: 1.7;">
+          <h3 style="color: #fff; margin-bottom: 0.5rem;">Executive Summary Excerpt</h3>
+          <p style="color: #cbd5e1; margin-bottom: 1rem;">
+            During October 2026, our security team performed an authorized Vulnerability Assessment and Penetration Testing (VAPT) engagement on the SecureBank Portal web application within an isolated laboratory environment (127.0.0.1:3000). The assessment identified five (5) critical security vulnerabilities spanning OWASP Top 10 categories, including SQL Injection, Insecure Direct Object References, Stored/Reflected XSS, Broken Authentication, and Security Misconfigurations.
+          </p>
+          <p style="color: #cbd5e1;">
+            All vulnerabilities were successfully reproduced in a non-destructive manner and subsequently remediated using industry-standard secure coding patterns (parameterized queries, session-tied authorization matrices, HTML context encoding, salted bcrypt hashing, and defense-in-depth security headers). Post-remediation verification confirmed 100% mitigation of identified attack vectors.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 5: Screencast Guide -->
+    <section id="panel-screencast" class="tab-panel">
+      <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem;">
+        <h2 style="color: var(--accent-cyan); margin-bottom: 0.5rem;">Video Presentation & Screencast Script (10 Marks)</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Timestamped script and demonstration breakdown designed for up to three students.
+        </p>
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+          <a href="docs/SCREENCAST_PRESENTATION_SCRIPT.md" target="_blank" class="btn-secondary" style="text-decoration: none;">
+            🎬 Open Full Word-for-Word Screencast Script
+          </a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+          <div style="background: #090d16; padding: 1rem; border-radius: 8px; border: 1px solid #1f293d;">
+            <h4 style="color: #38bdf8; margin-bottom: 0.5rem;">Student 1 (0:00 - 3:00)</h4>
+            <ul style="font-size: 0.8rem; color: #94a3b8; list-style-position: inside;">
+              <li>Team introduction & lab architecture</li>
+              <li>Vulnerability 1: SQL Injection exploit & parameterized fix</li>
+              <li>Live Burp Suite request/response interception</li>
+            </ul>
+          </div>
+          <div style="background: #090d16; padding: 1rem; border-radius: 8px; border: 1px solid #1f293d;">
+            <h4 style="color: #a78bfa; margin-bottom: 0.5rem;">Student 2 (3:00 - 6:00)</h4>
+            <ul style="font-size: 0.8rem; color: #94a3b8; list-style-position: inside;">
+              <li>Vulnerability 2: IDOR account statement tampering & remediation</li>
+              <li>Vulnerability 3: Stored/Reflected XSS demo & CSP defense</li>
+              <li>Before & after toggle demonstration</li>
+            </ul>
+          </div>
+          <div style="background: #090d16; padding: 1rem; border-radius: 8px; border: 1px solid #1f293d;">
+            <h4 style="color: #34d399; margin-bottom: 0.5rem;">Student 3 (6:00 - 8:30)</h4>
+            <ul style="font-size: 0.8rem; color: #94a3b8; list-style-position: inside;">
+              <li>Vulnerability 4: MD5 vs Bcrypt & Brute force lockout</li>
+              <li>Vulnerability 5: Diagnostic information disclosure</li>
+              <li>CVSS matrix, lessons learned & conclusion</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Live Inspector Drawer -->
+    <div class="inspector-panel">
+      <div class="inspector-header">
+        <div class="inspector-title">
+          <span>⚡</span> HTTP INSPECTOR & REAL-TIME SERVER LOGS
+        </div>
+        <button onclick="document.getElementById('inspector-content').innerHTML = '';" class="btn-secondary" style="padding: 2px 8px; font-size: 0.72rem;">Clear Logs</button>
+      </div>
+      <div id="inspector-content" class="inspector-body">
+        <div style="color: #64748b; font-size: 0.75rem;">Waiting for test execution... Select a station above or click a trigger button.</div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
